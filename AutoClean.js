@@ -31,17 +31,10 @@ const filterEntries = (entries, allUniqueParams) => {
     for (let entry of entries) {
         const entryParams = getParametersFromEntry(entry);
         const newParams = entryParams.some(param => !paramsCovered.has(param));
-        if (entryParams.length === 0 || newParams) {
+        if (newParams || (entry.request.postData.mimeType && entry.request.postData.text)) {
             result.push(entry);
             entryParams.forEach(param => paramsCovered.add(param));
         }
-        /* IMO, tiene sentido meter peticiones con parámetros nulos,
-        ** no reduciría demasiado el tiempo del análisis y las visitaría
-        ** para el posterior análisis pasivo
-        if (paramsCovered.size === allUniqueParams.size) {
-            break;
-        }
-        */
     }
     return result;
 }

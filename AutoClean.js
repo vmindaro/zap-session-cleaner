@@ -1,5 +1,4 @@
 const fs = require('fs');
-const url = require('url');
 
 const numberOfParameters = (entry, type) => {
     if (type === 'GET' && entry.request.queryString) {
@@ -24,7 +23,7 @@ const getParametersFromEntry = (entry) => {
     return [...params];
 }
 
-const filterEntries = (entries, allUniqueParams) => {
+const filterEntries = (entries) => {
     const result = [];
     const paramsCovered = new Set();
 
@@ -67,11 +66,8 @@ for (const node in entriesByNode) {
     const sortedGetEntries = [...getEntries].sort((a, b) => numberOfParameters(b, 'GET') - numberOfParameters(a, 'GET'));
     const sortedPostEntries = [...postEntries].sort((a, b) => numberOfParameters(b, 'POST') - numberOfParameters(a, 'POST'));
     
-    const uniqueGetParams = new Set(sortedGetEntries.flatMap(entry => getParametersFromEntry(entry, 'GET')));
-    const uniquePostParams = new Set(sortedPostEntries.flatMap(entry => getParametersFromEntry(entry, 'POST')));
-    
-    const minimizedGetEntries = filterEntries(sortedGetEntries, uniqueGetParams);
-    const minimizedPostEntries = filterEntries(sortedPostEntries, uniquePostParams);
+    const minimizedGetEntries = filterEntries(sortedGetEntries);
+    const minimizedPostEntries = filterEntries(sortedPostEntries);
 
     minimizedEntries = minimizedEntries.concat(minimizedGetEntries, minimizedPostEntries);
 }

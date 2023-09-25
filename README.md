@@ -29,4 +29,4 @@ node AutoClean.js
 Esto indicará por consola el número de entradas original y el nuevo tras el filtrado. En el mismo directorio se generará el fichero `MinimizedHarFile.har`, que se puede importar a una sesión nueva de OWASP ZAP para realizar un análisis.
 
 ## Limitaciones y problemas 
-- Aquellas peticiones `POST` con MIME tipo `application/x-www-form-urlencoded` sin parámetros de ningún tipo no se incluyen en el resultado final. Aquellas de diferente MIME tipo son todas incluidas sin excepción. En el futuro se buscará una solución a esto al menos para el tipo `multipart/form-data`
+- Aquellas peticiones `POST` con MIME tipo `application/x-www-form-urlencoded` sin parámetros de ningún tipo no se incluyen en el resultado final. Aquellas de diferente MIME tipo son todas incluidas sin excepción. En el futuro se buscará una solución a esto al menos para el tipo `multipart/form-data`. De forma similar, las peticiones `GET` sin *query* no se incluyen en el resultado final.

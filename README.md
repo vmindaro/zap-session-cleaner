@@ -1,7 +1,7 @@
 # zap-session-cleaner
 ## Descripción
 ### Finalidad
-El script creado tiene como finalidad automatizar la limpieza de sesiones de OWASP ZAP, minimizando el número de entradas y permitiendo, en un análisis activo, aplicar reglas más exhaustivas (*strength* con valor *high* o *insane*) en busca de un mayor número de vulnerabilidades.
+El script creado tiene como finalidad automatizar la limpieza de sesiones de OWASP ZAP, eliminando posibles entradas redundantes y permitiendo, en un análisis activo, aplicar reglas más exhaustivas (*strength* con valor *high* o *insane*) en busca de un mayor número de vulnerabilidades.
 
 ### Funcionamiento
 1. Convierte el archivo `.har` en un `.json`

@@ -1,41 +1,32 @@
 const fs = require('fs');
 
-const numberOfParameters = (entry, type) => {
-    if (type === 'GET' && entry.request.queryString) {
-        return entry.request.queryString.length;
-    } else if (type === 'POST' && entry.request.postData && entry.request.postData.params) {
-        return entry.request.postData.params.length;
-    }
-    return 0;
-}
-
 const getParametersFromEntry = (entry) => {
-    let params = new Set();
+    let res = new Set();
     if (entry.request.method === 'GET' && entry.request.queryString) {
         entry.request.queryString.forEach(param => {
-            params.add(param.name);
+            res.add(param.name);
         });
     } else if (entry.request.method === 'POST' && entry.request.postData && entry.request.postData.params) {
         entry.request.postData.params.forEach(param => {
-            params.add(param.name);
+            res.add(param.name);
         });
     }
-    return [...params];
+    return [...res];
 }
 
 const filterEntries = (entries) => {
-    const result = [];
+    const res = [];
     const paramsCovered = new Set();
 
-    for (let entry of entries) {
+    for (const entry of entries) {
         const entryParams = getParametersFromEntry(entry);
         const newParams = entryParams.some(param => !paramsCovered.has(param));
         if (newParams || (entry.request.postData.mimeType && entry.request.postData.text)) {
-            result.push(entry);
+            res.push(entry);
             entryParams.forEach(param => paramsCovered.add(param));
         }
     }
-    return result;
+    return res;
 }
 
 const groupByNode = (entries) => {
@@ -50,29 +41,22 @@ const groupByNode = (entries) => {
 }
 
 const harJson = JSON.parse(fs.readFileSync('./HarFile.har', 'utf8'));
-
 console.log(`Número de peticiones en el HAR original: ${harJson.log.entries.length}`);
-
 const entriesByNode = groupByNode(harJson.log.entries);
-
 let minimizedEntries = [];
 
 for (const node in entriesByNode) {
     const nodeEntries = entriesByNode[node];
+    const methods = ['GET', 'POST'];
 
-    const getEntries = nodeEntries.filter(entry => entry.request.method === 'GET');
-    const postEntries = nodeEntries.filter(entry => entry.request.method === 'POST');  
-
-    const sortedGetEntries = [...getEntries].sort((a, b) => numberOfParameters(b, 'GET') - numberOfParameters(a, 'GET'));
-    const sortedPostEntries = [...postEntries].sort((a, b) => numberOfParameters(b, 'POST') - numberOfParameters(a, 'POST'));
-    
-    const minimizedGetEntries = filterEntries(sortedGetEntries);
-    const minimizedPostEntries = filterEntries(sortedPostEntries);
-
-    minimizedEntries = minimizedEntries.concat(minimizedGetEntries, minimizedPostEntries);
+    methods.forEach((method) => {
+        const entries = nodeEntries.filter(entry => entry.request.method === method);
+        const sortedEntries = [...entries].sort((a,b) => getParametersFromEntry(b).length - getParametersFromEntry(a).length);
+        const filteredEntries = filterEntries(sortedEntries);
+        minimizedEntries = minimizedEntries.concat(filteredEntries);
+    });
 }
 
 console.log(`Número de peticiones en el HAR reducido: ${minimizedEntries.length}`);
-
 const minimizedHarJson = { ...harJson, log: { ...harJson.log, entries: minimizedEntries } };
 fs.writeFileSync('./MinimizedHarFile.har', JSON.stringify(minimizedHarJson, null, 2), 'utf8');

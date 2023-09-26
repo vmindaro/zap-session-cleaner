@@ -1,7 +1,9 @@
 /*
 ** Cambiar el nombre de archivo a 
-** 'blacklist.js' una vez añadidos
+** 'properties.js' una vez añadidos
 */
+
+const projectBaseUrl = 'https://mipagina.com:8443/proyecto';
 
 const exactBlacklist = [
     'exactParameterName' 
@@ -9,6 +11,7 @@ const exactBlacklist = [
 const regexBlacklist = [/theParameterContainsThis/i];
 
 module.exports = {
+    projectBaseUrl,
     exactBlacklist,
     regexBlacklist
 };

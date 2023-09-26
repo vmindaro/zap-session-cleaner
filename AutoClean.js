@@ -1,12 +1,13 @@
 const fs = require('fs');
-const { exactBlacklist, regexBlacklist, projectBaseUrl } = require('./properties');
+const { projectBaseUrl, nodeBlacklist, 
+    exactParamBlacklist, regexParamBlacklist } = require('./properties');
 
 const paramNotInBlacklist = (param) => {
-    if (exactBlacklist.includes(param)) {
+    if (exactParamBlacklist.includes(param)) {
         return false;
     }
 
-    for (const regex of regexBlacklist) {
+    for (const regex of regexParamBlacklist) {
         if (regex.test(param)) {
             return false; 
         }
@@ -82,7 +83,8 @@ const entriesByNode = groupByNode(harJson.log.entries);
 let minimizedEntries = [];
 
 for (const node in entriesByNode) {
-    if (!node.includes(projectBaseUrl)) continue;
+    const secondLevelNode = new URL(node).pathname.split('/').filter(p => p)[1]
+    if (!node.includes(projectBaseUrl) || nodeBlacklist.includes(secondLevelNode)) continue;
 
     const nodeEntries = entriesByNode[node];
     const methods = ['GET', 'POST'];

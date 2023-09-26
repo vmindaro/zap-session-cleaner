@@ -5,13 +5,20 @@
 
 const projectBaseUrl = 'https://mipagina.com:8443/proyecto';
 
-const exactBlacklist = [
-    'exactParameterName' 
+const nodeBlacklist = [
+    'js', 'css', 'treemenu'
 ];
-const regexBlacklist = [/theParameterContainsThis/i];
+
+const exactParamBlacklist = [
+    'exactParameterName1', 'exactParameterName2' 
+];
+const regexParamBlacklist = [
+    /theParameterContainsThis/i, /^[1-9]\d*$/
+];
 
 module.exports = {
     projectBaseUrl,
-    exactBlacklist,
-    regexBlacklist
+    nodeBlacklist,
+    exactParamBlacklist,
+    regexParamBlacklist
 };

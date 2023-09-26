@@ -1,11 +1,29 @@
 const fs = require('fs');
+const {exactBlacklist, regexBlacklist} = require('./blacklist');
+
+const paramNotInBlacklist = (param) => {
+    if (exactBlacklist.includes(param)) {
+        return false;
+    }
+
+    for (const regex of regexBlacklist) {
+        if (regex.test(param)) {
+            return false; 
+        }
+    }
+    return true;
+};
 
 const getParametersFromEntry = (entry) => {
     const rq = entry.request;
     let res = new Set();
 
     if (rq.method === 'GET' && rq.queryString) {
-        rq.queryString.forEach(param => res.add(param.name));
+        rq.queryString.forEach(param => {
+            if (paramNotInBlacklist(param.name)) {
+                res.add(param.name);
+            }
+        });
     } else if (rq.method === 'POST') {
         if (rq.postData.mimeType === 'application/x-www-form-urlencoded') {
             rq.postData.params.forEach(param => res.add(param.name));
@@ -14,7 +32,9 @@ const getParametersFromEntry = (entry) => {
             for (const part of parts) {
                 if (part.includes('=')) {
                     const [param] = part.split('=');
-                    res.add(param);
+                    if (paramNotInBlacklist(param)) {
+                        res.add(param.name);
+                    }
                 }
             }
         } else if (rq.postData.mimeType.startsWith('multipart/form-data')) {
@@ -22,14 +42,14 @@ const getParametersFromEntry = (entry) => {
             const parts = rq.postData.text.split(boundary).slice(1, -1);
             parts.forEach(part => {
                 const match = part.match(/name="([^"]+)"/);
-                if (match) {
+                if (match && paramNotInBlacklist(match[1])) {
                     res.add(match[1]);
                 }
             });
         }
     } 
     return [...res];
-}
+};
 
 const filterEntries = (entries) => {
     const res = [];
@@ -44,7 +64,7 @@ const filterEntries = (entries) => {
         } 
     }
     return res;
-}
+};
 
 const groupByNode = (entries) => {
     return entries.reduce((acc, entry) => {
@@ -55,7 +75,7 @@ const groupByNode = (entries) => {
         acc[node] = (acc[node] || []).concat(entry);
         return acc;
     }, {});
-}
+};
 
 const harJson = JSON.parse(fs.readFileSync('./HarFile.har', 'utf8'));
 const entriesByNode = groupByNode(harJson.log.entries);
@@ -71,7 +91,7 @@ for (const node in entriesByNode) {
         const filteredEntries = filterEntries(sortedEntries);
         minimizedEntries = minimizedEntries.concat(filteredEntries);
     });
-}
+};
 
 const minimizedHarJson = { ...harJson, log: { ...harJson.log, entries: minimizedEntries } };
 fs.writeFileSync('./MinimizedHarFile.har', JSON.stringify(minimizedHarJson, null, 2), 'utf8');

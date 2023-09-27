@@ -27,7 +27,11 @@ const getParametersFromEntry = (entry) => {
         });
     } else if (rq.method === 'POST') {
         if (rq.postData.mimeType === 'application/x-www-form-urlencoded') {
-            rq.postData.params.forEach(param => res.add(param.name));
+            rq.postData.params.forEach(param => {
+                if (paramNotInBlacklist(param.name)) {
+                    res.add(param.name);
+                }
+            });
         } else if (rq.postData.mimeType === 'text/plain') {
             const parts = rq.postData.text.split('\n');
             for (const part of parts) {
@@ -80,6 +84,7 @@ const groupByNode = (entries) => {
 
 const harJson = JSON.parse(fs.readFileSync('./HarFile.har', 'utf8'));
 const entriesByNode = groupByNode(harJson.log.entries);
+const methods = ['GET', 'POST'];
 let minimizedEntries = [];
 
 for (const node in entriesByNode) {
@@ -87,8 +92,6 @@ for (const node in entriesByNode) {
     if (!node.includes(projectBaseUrl) || nodeBlacklist.includes(secondLevelNode)) continue;
 
     const nodeEntries = entriesByNode[node];
-    const methods = ['GET', 'POST'];
-
     methods.forEach((method) => {
         const entries = nodeEntries.filter(entry => entry.request.method === method);
         const sortedEntries = [...entries].sort((a,b) => getParametersFromEntry(b).length - getParametersFromEntry(a).length);

@@ -27,41 +27,44 @@ const getParametersFromEntry = (entry) => {
     const rq = entry.request;
     let res = new Set();
     
-    if (rq.method === 'GET' && rq.queryString) {
+    if (rq.queryString) {
         rq.queryString.forEach(param => {
             if (paramNotInBlacklist(param.name)) {
                 res.add(param.name);
             }
         });
-    } else if (rq.method === 'POST') {
-        // Se valoran distintos tipos de mimeType para POST
-        if (rq.postData.mimeType === 'application/x-www-form-urlencoded') {
-            rq.postData.params.forEach(param => {
-                if (paramNotInBlacklist(param.name)) {
+    } 
+
+    if (rq.postData.mimeType === 'application/x-www-form-urlencoded' || rq.postData.mimeType === 'application/json') {
+        rq.postData.params.forEach(param => {
+            if (paramNotInBlacklist(param.name)) {
+                res.add(param.name);
+            }
+        });
+    }  
+    
+    if (rq.postData.mimeType === 'text/plain') {
+        const parts = rq.postData.text.split('\n');
+        for (const part of parts) {
+            if (part.includes('=')) {
+                const [param] = part.split('=');
+                if (paramNotInBlacklist(param)) {
                     res.add(param.name);
                 }
-            });
-        } else if (rq.postData.mimeType === 'text/plain') {
-            const parts = rq.postData.text.split('\n');
-            for (const part of parts) {
-                if (part.includes('=')) {
-                    const [param] = part.split('=');
-                    if (paramNotInBlacklist(param)) {
-                        res.add(param.name);
-                    }
-                }
             }
-        } else if (rq.postData.mimeType.startsWith('multipart/form-data')) {
-            const boundary = rq.postData.mimeType.split('boundary=')[1].trim();
-            const parts = rq.postData.text.split(boundary).slice(1, -1);
-            parts.forEach(part => {
-                const match = part.match(/name="([^"]+)"/);
-                if (match && paramNotInBlacklist(match[1])) {
-                    res.add(match[1]);
-                }
-            });
         }
     } 
+    
+    if (rq.postData.mimeType.startsWith('multipart/form-data')) {
+        const boundary = rq.postData.mimeType.split('boundary=')[1].trim();
+        const parts = rq.postData.text.split(boundary).slice(1, -1);
+        parts.forEach(part => {
+            const match = part.match(/name="([^"]+)"/);
+            if (match && paramNotInBlacklist(match[1])) {
+                res.add(match[1]);
+            }
+        });
+    }
 
     return [...res];
 };
@@ -132,7 +135,7 @@ const allEntries = harJson.log.entries;
 let minimizedEntries = [];
 
 // Realiza la operación de limpieza por método
-['GET', 'POST'].forEach((method) => {
+['GET', 'POST', 'PUT', 'DELETE'].forEach((method) => {
     const methodEntries = allEntries.filter(entry => entry.request.method === method);
     
     // Ordena alfanuméricamente las URLs, en caso de coincidencia, por nº de params

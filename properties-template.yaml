@@ -1,0 +1,13 @@
+projectBaseUrl: https://ejemplo:8080/subdominio
+
+urlBlacklistRegex:
+  - grid[a-zA-Z]*\.action  # URLs de grid
+  - \/js[\/]*              # Carpeta de /js/
+  - \/jsdynamic[\/]*       # Carpetas de /jsdynamic/
+
+paramBlacklistExact:
+  - token                  # El parámetro 'token'
+
+paramBlacklistRegex:
+  - grid                   # Cualquier parámetro con substring 'grid'
+  - \d{3}                  # Cualquier parámetro con 3 números

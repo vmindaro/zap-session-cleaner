@@ -1,8 +1,6 @@
 
 *.har
 properties.js
-node_modules
-*.json
 properties.yaml
 AutoClean.js
 AutoCleanMedium.js

@@ -28,7 +28,10 @@ API_URL = 'http://localhost:8080'
 os.system('{ zap.sh -daemon -silent > /dev/null 2>&1 & }')
 
 ### Limpieza directorio sesión limpia ###
-shutil.rmtree('/zap/wrk/sesionLimpia/')
+newSesionPath = '/zap/wrk/sesionLimpia/'
+for item in os.listdir(newSesionPath):
+    itemPath = os.path.join(newSesionPath, item)
+    os.remove(itemPath)
 
 ### Copia fichero de configuración a directorio de limpieza ###
 srcFile = '/zap/wrk/properties.yaml'
@@ -39,8 +42,8 @@ shutil.copyfile(srcFile, dstFile)
 time.sleep(15)
 
 ### Carga de la sesión original ###
-ogSessionRoute = glob.glob('/zap/wrk/sesionOriginal/*.session')[0]
-params = {'name': ogSessionRoute}
+ogSessionPath = glob.glob('/zap/wrk/sesionOriginal/*.session')[0]
+params = {'name': ogSessionPath}
 requests.get(API_URL + '/JSON/core/action/loadSession/',
              headers=JSON_HEADER,
              params=params)
@@ -77,7 +80,7 @@ requests.get(API_URL + '/JSON/exim/action/importHar/',
 time.sleep(10)
 
 ### Guardado de sesión limpia ###
-ogSessionName = os.path.basename(ogSessionRoute)
+ogSessionName = os.path.basename(ogSessionPath)
 newSessionName = ogSessionName.replace('.session', '_limpio.session')
 
 params = {'name': f'/zap/wrk/sesionLimpia/{newSessionName}'}

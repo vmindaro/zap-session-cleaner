@@ -4,7 +4,6 @@ const yaml = require('js-yaml');
 const configYaml = fs.readFileSync('properties.yaml', 'utf-8');
 const config = yaml.load(configYaml);
 
-const projectBaseUrl = config.projectBaseUrl;
 const urlBlacklistRegex = config.urlBlacklistRegex;
 const paramBlacklistExact = config.paramBlacklistExact;
 const paramBlacklistRegex = config.paramBlacklistRegex;
@@ -33,9 +32,12 @@ const getParametersFromEntry = (entry) => {
                 res.add(param.name);
             }
         });
-    } 
+    }
 
-    if (rq.postData.mimeType === 'application/x-www-form-urlencoded' || rq.postData.mimeType === 'application/json') {
+    let isMimeTypeFormUrlencoded = rq.postData.mimeType === 'application/x-www-form-urlencoded'
+    let isMimeTypeJson = rq.postData.mimeType === 'application/json'
+
+    if (isMimeTypeFormUrlencoded || isMimeTypeJson) {
         rq.postData.params.forEach(param => {
             if (paramNotInBlacklist(param.name)) {
                 res.add(param.name);
@@ -80,44 +82,31 @@ const filterEntries = (entries) => {
         const urlNoQuery = entry.request.url.split('?')[0];
         const entryParams = getParametersFromEntry(entry);
 
-        // Se descarta si no es parte del nodo del proyecto
-        if (!entry.request.url.includes(projectBaseUrl)) {
-            urlOutOfProject++;
-            continue;
-        }
-        
         // Se descarta si está en la lista negra de regex
-        if (urlBlacklistRegex.some(regex => new RegExp(regex, 'i').test(urlNoQuery))) {
-            urlOnBlacklist++;
-            continue;
-        }
-
-        // Se descarta si no tiene parámetros (o son superfluos)
-        if (entryParams.length <= 0 ) {
-            urlWithNoParams++;
+        if (urlBlacklistRegex.some(regex => 
+            {new RegExp(regex, 'i').test(urlNoQuery)})) {
             continue;
         }
         
         // Si la URL encontrada es nueva, seguro que es la que más parámetros
-        // tiene, así que la añadimos al resultado final. Limpiamos los parámetros
-        // cubiertos hasta ahora e incluimos los de la nueva URL
+        // tiene, así que la añadimos al resultado final. Limpiamos los 
+        // parámetros cubiertos hasta ahora e incluimos los de la nueva URL
         if (urlNoQuery !== target) {
             target = urlNoQuery;
             paramsCovered.clear();
             entryParams.forEach(param => paramsCovered.add(param));
             res.push(entry);
         } else {
-            // Si la URL encontrada es la misma que la de antes, puede tener o no
-            // parámetros diferentes que sus anteriores 
-            const newParams = entryParams.some(param => !paramsCovered.has(param));
+            // Si la URL encontrada es la misma que la de antes, puede tener o 
+            // no parámetros diferentes que sus anteriores
+            const newParams = entryParams.some(param => 
+                {!paramsCovered.has(param)});
+
             if (newParams) {
-                // Si los tiene, se añade al resultado final, y sus parámetros se
-                // consideran "cubiertos"
+                // Si los tiene, se añade al resultado final, y sus parámetros 
+                // se consideran "cubiertos"
                 res.push(entry);
                 entryParams.forEach(param => paramsCovered.add(param));
-            } else {
-                // Si no, se descarta
-                urlWithRedundantParams++;
             }
         }
     }
@@ -125,20 +114,16 @@ const filterEntries = (entries) => {
     return res;
 };
 
-let urlOutOfProject = 0;
-let urlOnBlacklist = 0;
-let urlWithNoParams = 0;
-let urlWithRedundantParams = 0;
-
 const harJson = JSON.parse(fs.readFileSync('./HarFile.har', 'utf8'));
 const allEntries = harJson.log.entries;
 let minimizedEntries = [];
 
 // Realiza la operación de limpieza por método
 ['GET', 'POST', 'PUT', 'DELETE'].forEach((method) => {
-    const methodEntries = allEntries.filter(entry => entry.request.method === method);
+    const methodEntries = allEntries.filter(entry => {
+        entry.request.method === method});
     
-    // Ordena alfanuméricamente las URLs, en caso de coincidencia, por nº de params
+    // Ordena alfanuméricamente las URLs, en coincidencia, por nº de params
     const sortedEntries = [...methodEntries].sort((a,b) => {
         const urlA = a.request.url.split('?')[0];
         const urlB = b.request.url.split('?')[0];
@@ -152,12 +137,3 @@ let minimizedEntries = [];
 
 const minimizedHarJson = { ...harJson, log: { ...harJson.log, entries: minimizedEntries }};
 fs.writeFileSync('./MinimizedHarFile.har', JSON.stringify(minimizedHarJson, null, 2), 'utf8');
-
-// Mensajes por consola
-console.log(`Número de peticiones en el HAR original: ${harJson.log.entries.length}\n`);
-console.log(`Balance de limpieza:\n> Eliminadas por no ser parte del proyecto: ${urlOutOfProject}`);
-console.log(`> Eliminadas por lista negra de regex : ${urlOnBlacklist}`);
-console.log(`> Eliminadas por no tener parámetros: ${urlWithNoParams}`);
-console.log(`> Eliminadas por haber la misma URL con más parámetros: ${urlWithRedundantParams}`);
-console.log(`Total URLs eliminadas: ${urlOutOfProject+urlOnBlacklist+urlWithNoParams+urlWithRedundantParams}\n`);
-console.log(`Número de peticiones en el HAR reducido: ${minimizedEntries.length}`);

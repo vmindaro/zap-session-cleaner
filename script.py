@@ -85,9 +85,22 @@ requests.get(API_URL + '/JSON/exim/action/importHar/',
              headers=JSON_HEADER,
              params=params)
 
+### Añadiendo excepciones de URL al análisis activo en la sesión ###
+print('> Añadiendo excepciones de URL al análisis activo en la sesión')
+with open('/zap/wrk/properties.yaml') as f:
+    urlBlacklistRegex = yaml.safe_load(f)['urlBlacklistRegex']
+
+for urlRegex in urlBlacklistRegex:
+    params = {'regex': urlRegex}
+    requests.get(API_URL + '/JSON/ascan/action/excludeFromScan/',
+                 headers=JSON_HEADER,
+                 params=params)
+
 ### Espera al escáner pasivo ###
-print('> Espera al escáner pasivo (30s)')
-time.sleep(30)
+nUrls = len(urlIdsList)
+pscanSleepTime = int(nUrls*0.05)
+print(f'> Espera al escáner pasivo ({pscanSleepTime}s)')
+time.sleep(pscanSleepTime)
 
 ### Guardado de sesión limpia ###
 print('> Guardado de sesión limpia')

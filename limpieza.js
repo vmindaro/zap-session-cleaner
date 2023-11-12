@@ -27,9 +27,9 @@ const getParamsFromEntry = (entry) => {
     const dataType = rq.postData.mimeType;
 
     let res = new Set();
-    let dataTypeIsForm = dataType === 'application/x-www-form-urlencoded'
-    let dataTypeIsJson = dataType === 'application/json'
-    let dataTypeIsText = dataType === 'text/plain'
+    let dataTypeIsForm = dataType === 'application/x-www-form-urlencoded';
+    let dataTypeIsJson = dataType === 'application/json';
+    let dataTypeIsText = dataType === 'text/plain';
     
     if (rq.queryString) {
         rq.queryString.forEach(param => {
@@ -143,6 +143,4 @@ let minimizedEntries = [];
 const newLogJson = { ...harJson.log, entries: minimizedEntries };
 const newHarJson = { ...harJson, log: newLogJson};
 const newHarString = JSON.stringify(newHarJson, null, 2);
-console.log(allEntries.length);
-console.log(minimizedEntries.length);
 fs.writeFileSync('./MinimizedHarFile.har', newHarString, 'utf8');

@@ -42,7 +42,7 @@ dstFile = '/zap/zap-session-cleaner/properties.yaml'
 shutil.copyfile(srcFile, dstFile)
 
 ### Espera ZAP ###
-print('> Espera ZAP')
+print('> Espera ZAP (15s)')
 time.sleep(15)
 
 ### Carga de la sesión original ###
@@ -86,8 +86,8 @@ requests.get(API_URL + '/JSON/exim/action/importHar/',
              params=params)
 
 ### Espera al escáner pasivo ###
-print('> Espera al escáner pasivo')
-time.sleep(10)
+print('> Espera al escáner pasivo (30s)')
+time.sleep(30)
 
 ### Guardado de sesión limpia ###
 print('> Guardado de sesión limpia')

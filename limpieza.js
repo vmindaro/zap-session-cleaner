@@ -125,7 +125,8 @@ let minimizedEntries = [];
 // Realiza la operación de limpieza por método
 ['GET', 'POST', 'PUT', 'DELETE'].forEach((method) => {
     const methodEntries = allEntries.filter(entry => {
-        entry.request.method === method});
+        return entry.request.method === method
+    });
     
     // Ordena alfanuméricamente las URLs, en coincidencia, por nº de params
     const sortedEntries = [...methodEntries].sort((a,b) => {

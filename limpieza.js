@@ -22,9 +22,14 @@ const paramNotInBlacklist = (param) => {
     return true;
 };
 
-const getParametersFromEntry = (entry) => {
+const getParamsFromEntry = (entry) => {
     const rq = entry.request;
+    const dataType = rq.postData.mimeType;
+
     let res = new Set();
+    let dataTypeIsForm = dataType === 'application/x-www-form-urlencoded'
+    let dataTypeIsJson = dataType === 'application/json'
+    let dataTypeIsText = dataType === 'text/plain'
     
     if (rq.queryString) {
         rq.queryString.forEach(param => {
@@ -34,10 +39,7 @@ const getParametersFromEntry = (entry) => {
         });
     }
 
-    let isMimeTypeFormUrlencoded = rq.postData.mimeType === 'application/x-www-form-urlencoded'
-    let isMimeTypeJson = rq.postData.mimeType === 'application/json'
-
-    if (isMimeTypeFormUrlencoded || isMimeTypeJson) {
+    if (dataTypeIsForm || dataTypeIsJson) {
         rq.postData.params.forEach(param => {
             if (paramNotInBlacklist(param.name)) {
                 res.add(param.name);
@@ -45,7 +47,7 @@ const getParametersFromEntry = (entry) => {
         });
     }  
     
-    if (rq.postData.mimeType === 'text/plain') {
+    if (dataTypeIsText) {
         const parts = rq.postData.text.split('\n');
         for (const part of parts) {
             if (part.includes('=')) {
@@ -80,11 +82,12 @@ const filterEntries = (entries) => {
         // Nos quedamos con la URL sin query, para que en caso de los GET no 
         // considerar un parámetro con valores diferentes como URLs diferentes
         const urlNoQuery = entry.request.url.split('?')[0];
-        const entryParams = getParametersFromEntry(entry);
+        const entryParams = getParamsFromEntry(entry);
 
         // Se descarta si está en la lista negra de regex
-        if (urlBlacklistRegex.some(regex => 
-            {new RegExp(regex, 'i').test(urlNoQuery)})) {
+        if (urlBlacklistRegex.some(regex => {
+            return new RegExp(regex, 'i').test(urlNoQuery)
+        })) {
             continue;
         }
         
@@ -99,8 +102,9 @@ const filterEntries = (entries) => {
         } else {
             // Si la URL encontrada es la misma que la de antes, puede tener o 
             // no parámetros diferentes que sus anteriores
-            const newParams = entryParams.some(param => 
-                {!paramsCovered.has(param)});
+            const newParams = entryParams.some(param => {
+                return !paramsCovered.has(param)
+            });
 
             if (newParams) {
                 // Si los tiene, se añade al resultado final, y sus parámetros 
@@ -129,11 +133,15 @@ let minimizedEntries = [];
         const urlB = b.request.url.split('?')[0];
         const urlComparison = urlA.localeCompare(urlB);
         if (urlComparison !== 0) return urlComparison;
-        return getParametersFromEntry(b).length - getParametersFromEntry(a).length;
+        return getParamsFromEntry(b).length - getParamsFromEntry(a).length;
     });
     const filteredEntries = filterEntries(sortedEntries);
     minimizedEntries = minimizedEntries.concat(filteredEntries);
 });
 
-const minimizedHarJson = { ...harJson, log: { ...harJson.log, entries: minimizedEntries }};
-fs.writeFileSync('./MinimizedHarFile.har', JSON.stringify(minimizedHarJson, null, 2), 'utf8');
+const newLogJson = { ...harJson.log, entries: minimizedEntries };
+const newHarJson = { ...harJson, log: newLogJson};
+const newHarString = JSON.stringify(newHarJson, null, 2);
+console.log(allEntries.length);
+console.log(minimizedEntries.length);
+fs.writeFileSync('./MinimizedHarFile.har', newHarString, 'utf8');

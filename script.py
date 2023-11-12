@@ -98,7 +98,7 @@ for urlRegex in urlBlacklistRegex:
 
 ### Espera al escáner pasivo ###
 nUrls = len(urlIdsList)
-pscanSleepTime = int(nUrls*0.05)
+pscanSleepTime = int(nUrls*0.04)
 print(f'> Espera al escáner pasivo ({pscanSleepTime}s)')
 time.sleep(pscanSleepTime)
 
